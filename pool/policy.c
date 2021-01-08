@@ -115,11 +115,14 @@ static int pver_first_available_get(struct m0_pools_common  *pc,
 
 	/* Check pool version cache */
 	*pv = m0_pool_clean_pver_find(pool);
-	if (*pv != NULL)
+	if (*pv != NULL) {
+		M0_LOG(M0_ALWAYS, "Found cached pool version");
 		return M0_RC(0);
+	}
 
 	/* Derive new pver using formulae */
 	rc = m0_conf_pver_get(pc->pc_confc, &pool->po_id, &pver);
+	M0_LOG(M0_ALWAYS, "Derived new formulaeic pool version from conf");
 	if (rc != 0)
 		return M0_ERR(rc);
 
