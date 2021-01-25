@@ -370,6 +370,8 @@ m0__obj_pool_version_get(struct m0_obj *obj,
 		obj->ob_attr.oa_pver = (*pv)->pv_id;
 	}
 
+	M0_LOG(M0_ALWAYS, "PVER FID"FID_F, FID_P(&(*pv)->pv_id));
+
 	return M0_RC(rc);
 }
 
