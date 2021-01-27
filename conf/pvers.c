@@ -139,8 +139,10 @@ static int conf_pver_find_locked(const struct m0_conf_pool *pool,
 			M0_LOG(M0_INFO, "Skipping "FID_F, FID_P(pver_to_skip));
 			continue;
 		}
-		if (!m0_conf_pver_is_clean(pver))
+		if (!m0_conf_pver_is_clean(pver)) {
+			M0_LOG(M0_ALWAYS, "PVER DIRTY");
 			continue;
+		}
 		if (pver->pv_kind == M0_CONF_PVER_ACTUAL) {
 			*out = pver;
 			return M0_RC(0);
@@ -267,6 +269,11 @@ static int conf_pver_formulaic_base(const struct m0_conf_pver *fpver,
 				   FID_F" is missing",
 				   FID_P(&fpver->pv_u.formulaic.pvf_base),
 				   FID_P(&fpver->pv_obj.co_id));
+	else
+		M0_LOG(M0_ALWAYS, "Base "FID_F" of formulaic pver "
+                                    FID_F" is present",
+                                    FID_P(&fpver->pv_u.formulaic.pvf_base),
+                                    FID_P(&fpver->pv_obj.co_id));
 	*out = M0_CONF_CAST(base, m0_conf_pver);
 	M0_POST((*out)->pv_kind == M0_CONF_PVER_ACTUAL);
 	return M0_RC(0);
@@ -278,7 +285,7 @@ M0_INTERNAL bool m0_conf_pver_is_clean(const struct m0_conf_pver *pver)
 	const uint32_t      *recd;
 	const uint32_t      *allowance;
 
-	M0_ENTRY("pver=%p "FID_F, pver, FID_P(&pver->pv_obj.co_id));
+	M0_LOG(M0_ALWAYS, "pver=%p "FID_F, pver, FID_P(&pver->pv_obj.co_id));
 
 	if (pver->pv_kind == M0_CONF_PVER_ACTUAL) {
 		recd = pver->pv_u.subtree.pvs_recd;
@@ -728,6 +735,8 @@ static int conf_pver_virtual_create(const struct m0_fid *fid,
 	struct m0_conf_cache         *cache = base->pv_obj.co_cache;
 	struct conf_pver_base_walk_st st;
 	int                           rc;
+
+	M0_LOG(M0_ALWAYS, "Creating Virtual Pver");
 
 	{ /* Validate the fid. */
 		enum m0_conf_pver_kind kind;
