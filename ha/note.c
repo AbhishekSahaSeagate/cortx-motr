@@ -176,12 +176,14 @@ static void ha_state_accept(struct m0_confc         *confc,
 		       obj, obj == NULL ? -1 : obj->co_status);
 		if (obj != NULL && obj->co_status == M0_CS_READY) {
 			prev_ha_state = obj->co_ha_state;
+			obj->co_ha_state = note->nv_note[i].no_state;
 			M0_LOG(M0_ALWAYS, "prev ha state: %d new ha state: %d",
 					 prev_ha_state, obj->co_ha_state);
-			obj->co_ha_state = note->nv_note[i].no_state;
 			if (!ignore_same_state ||
-			    prev_ha_state != obj->co_ha_state)
+			    prev_ha_state != obj->co_ha_state) {
 				m0_chan_broadcast(&obj->co_ha_chan);
+				M0_LOG(M0_ALWAYS, "HA msg broadcasted");
+			}
 		}
 	}
 	m0_conf_cache_unlock(cache);
