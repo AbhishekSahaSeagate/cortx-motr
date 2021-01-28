@@ -118,6 +118,7 @@ static int poolmach_state_update(struct m0_poolmach_state *st,
 				FID_P(&pdev->pd_id), pdev->pd_index,
 				pdev->pd_sdev_idx,
 				pme.pe_state);
+	M0_LOG(M0_ALWAYS, "PMachine state transition called here");
 		rc = m0_poolmach_state_transit(pdev->pd_pm, &pme);
 
 		M0_CNT_INC(*idx_devices);
@@ -501,6 +502,8 @@ M0_INTERNAL int m0_poolmach_state_transit(struct m0_poolmach       *pm,
 	struct m0_poolmach_event_link *new_link;
 
 	M0_ENTRY();
+	M0_LOG(M0_ALWAYS, "PMachine state transisting, event_type: %d",
+		event->pe_type);
 
 	M0_PRE(pm != NULL);
 	M0_PRE(event != NULL);
@@ -543,7 +546,8 @@ M0_INTERNAL int m0_poolmach_state_transit(struct m0_poolmach       *pm,
 	default:
 		return M0_ERR(-EINVAL);
 	}
-
+	M0_LOG(M0_ALWAYS, "Old state: %d, New state: %d", old_state,
+		event->pe_state);
 	if (old_state == event->pe_state)
 		return M0_RC(0);
 
@@ -691,6 +695,9 @@ M0_INTERNAL int m0_poolmach_state_transit(struct m0_poolmach       *pm,
 		poolmach_events_tlink_init_at_tail(new_link,
 				&state->pst_events_list);
 	}
+	M0_LOG(M0_ALWAYS, "Pool type: %d, failures: %d, max_failures: %d",
+		event->pe_type, state->pst_nr_failures,
+		state->pst_max_device_failures);
 	/** @todo Add ADDB error message here. */
 	if (event->pe_type == M0_POOL_DEVICE &&
 	    state->pst_nr_failures > state->pst_max_device_failures &&
@@ -950,6 +957,7 @@ M0_INTERNAL void m0_poolmach_failvec_apply(struct m0_poolmach *pm,
 			}
                         m0_rwlock_write_unlock(&pm->pm_lock);
                 }
+	M0_LOG(M0_ALWAYS, "PMachine state transition called here");
                 rc = m0_poolmach_state_transit(pm, &pme);
 		/*
 		 * Drop the stale (already) event for this disk
@@ -1020,6 +1028,7 @@ static int poolmach_spare_inherit(struct m0_poolmach *pm, struct m0_pool *pool)
 			M0_CNT_INC(state->pst_nr_failures);
                         m0_rwlock_write_unlock(&pm->pm_lock);
                 }
+	M0_LOG(M0_ALWAYS, "PMachine state transition called here");
                 rc = m0_poolmach_state_transit(pm, &pme);
                 if (rc != 0)
 			break;
@@ -1073,6 +1082,7 @@ M0_INTERNAL void m0_poolmach_event_queue_apply(struct m0_poolmach *pm)
 
 	m0_tl_for (poolmach_equeue, head, scan) {
 		event = &scan->pel_event;
+	M0_LOG(M0_ALWAYS, "PMachine state transition called here");
 		m0_poolmach_state_transit(pm, event);
 		poolmach_equeue_tlink_del_fini(scan);
 		m0_free(scan);

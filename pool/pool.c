@@ -1879,6 +1879,7 @@ static bool disks_poolmach_state_update_cb(struct m0_clink *cl)
 			 pme.pe_type == M0_POOL_DEVICE ? "device":"node",
 			 pme.pe_index, pme.pe_state);
 
+	M0_LOG(M0_ALWAYS, "PMachine state transition called here");
 	return M0_RC(m0_poolmach_state_transit(pdev->pd_pm, &pme));
 }
 
@@ -1979,6 +1980,7 @@ M0_INTERNAL int m0_pool_device_state_update(struct m0_reqh        *reqh,
 	int                       dev_idx;
 	struct m0_poolmach_event  pme;
 
+	M0_LOG(M0_ALWAYS, "PMachine state transition called here");
 	m0_tl_for(pools, &pc->pc_pools, pool) {
 		m0_tl_for(pool_version, &pool->po_vers, pver) {
 			pm = &pver->pv_mach;
