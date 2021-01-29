@@ -114,7 +114,6 @@ static void poolmach_set_op(struct m0_fom *fom)
 			pm = &pv->pv_mach;
 			rc = m0_poolmach_fid_to_idx(pm, dev_fid, &pme.pe_index);
 			M0_ASSERT(rc == 0);
-	M0_LOG(M0_ALWAYS, "PMachine state transition called here");
 			rc = m0_poolmach_state_transit(pm, &pme);
 			if (rc != 0)
 				break;

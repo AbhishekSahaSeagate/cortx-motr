@@ -114,11 +114,10 @@ static int poolmach_state_update(struct m0_poolmach_state *st,
 		pme.pe_index = *idx_devices;
 		pme.pe_state = m0_ha2pm_state_map(d->ck_obj.co_ha_state);
 
-		M0_LOG(M0_DEBUG, "device:"FID_F"index:%d dev_idx:%d state:%d",
+		M0_LOG(M0_ALWAYS, "device:"FID_F"index:%d dev_idx:%d state:%d",
 				FID_P(&pdev->pd_id), pdev->pd_index,
 				pdev->pd_sdev_idx,
 				pme.pe_state);
-	M0_LOG(M0_ALWAYS, "PMachine state transition called here");
 		rc = m0_poolmach_state_transit(pdev->pd_pm, &pme);
 
 		M0_CNT_INC(*idx_devices);
@@ -502,8 +501,6 @@ M0_INTERNAL int m0_poolmach_state_transit(struct m0_poolmach       *pm,
 	struct m0_poolmach_event_link *new_link;
 
 	M0_ENTRY();
-	M0_LOG(M0_ALWAYS, "PMachine state transisting, event_type: %d",
-		event->pe_type);
 
 	M0_PRE(pm != NULL);
 	M0_PRE(event != NULL);
@@ -957,7 +954,6 @@ M0_INTERNAL void m0_poolmach_failvec_apply(struct m0_poolmach *pm,
 			}
                         m0_rwlock_write_unlock(&pm->pm_lock);
                 }
-	M0_LOG(M0_ALWAYS, "PMachine state transition called here");
                 rc = m0_poolmach_state_transit(pm, &pme);
 		/*
 		 * Drop the stale (already) event for this disk
@@ -1028,7 +1024,6 @@ static int poolmach_spare_inherit(struct m0_poolmach *pm, struct m0_pool *pool)
 			M0_CNT_INC(state->pst_nr_failures);
                         m0_rwlock_write_unlock(&pm->pm_lock);
                 }
-	M0_LOG(M0_ALWAYS, "PMachine state transition called here");
                 rc = m0_poolmach_state_transit(pm, &pme);
                 if (rc != 0)
 			break;

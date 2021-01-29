@@ -526,6 +526,8 @@ static int conf_pver_recd_build(struct m0_conf_obj *obj, void *args)
 	if (m0_conf_obj_type(obj) == &M0_CONF_OBJV_TYPE) {
 		objv = M0_CONF_CAST(obj, m0_conf_objv);
 		if (objv->cv_real->co_ha_state != M0_NC_ONLINE) {
+		M0_LOG(M0_ALWAYS, "Conf Obj "FID_F" OFFLINE",
+			FID_P(&objv->cv_real->co_id));
 			lvl = m0_conf_pver_level(obj);
 			M0_ASSERT(lvl != 0 && lvl < M0_CONF_PVER_HEIGHT);
 			M0_CNT_INC(recd[lvl]);
@@ -625,6 +627,8 @@ static int conf_pver_base_obj_check(struct m0_conf_obj *obj,
 	       level);
 	if (st->bws_failed == NULL) {
 		if (objv->cv_real->co_ha_state != M0_NC_ONLINE) {
+                M0_LOG(M0_ALWAYS, "Conf Obj "FID_F" OFFLINE",
+                        FID_P(&objv->cv_real->co_id));
 			M0_CNT_DEC(st->bws_allowance[level]);
 			return M0_RC(M0_CW_SKIP_SUBTREE);
 		}
