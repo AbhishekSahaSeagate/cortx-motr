@@ -123,6 +123,9 @@ static int pver_first_available_get(struct m0_pools_common  *pc,
 	/* Derive new pver using formulae */
 	rc = m0_conf_pver_get(pc->pc_confc, &pool->po_id, &pver);
 	M0_LOG(M0_ALWAYS, "Derived new formulaeic pool version from conf");
+	M0_LOG(M0_ALWAYS, "New N=%d K=%d P=%d", (*pv)->pv_attr.pa_N,
+						(*pv)->pv_attr.pa_K,
+						(*pv)->pv_attr.pa_P);
 	if (rc != 0)
 		return M0_ERR(rc);
 
