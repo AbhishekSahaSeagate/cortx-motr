@@ -371,7 +371,7 @@ m0__obj_pool_version_get(struct m0_obj *obj,
 	}
 
 	M0_LOG(M0_ALWAYS, "PVER FID"FID_F, FID_P(&(*pv)->pv_id));
-	M0_LOG(M0_ALWAYS, "Assiged New values of N=%d K=%d P=%d",
+	M0_LOG(M0_ALWAYS, "Assiged values of N=%d K=%d P=%d",
 						(*pv)->pv_attr.pa_N,
 						(*pv)->pv_attr.pa_K,
 						(*pv)->pv_attr.pa_P);
