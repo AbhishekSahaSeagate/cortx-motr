@@ -375,6 +375,12 @@ m0__obj_pool_version_get(struct m0_obj *obj,
 						(*pv)->pv_attr.pa_N,
 						(*pv)->pv_attr.pa_K,
 						(*pv)->pv_attr.pa_P);
+	M0_LOG(M0_ALWAYS, "SRECD = [%d, %d, %d, %d, %d]",
+						(*pv)->pv_fd_tol_vec[0],
+						(*pv)->pv_fd_tol_vec[1],
+						(*pv)->pv_fd_tol_vec[2],
+						(*pv)->pv_fd_tol_vec[3],
+						(*pv)->pv_fd_tol_vec[4]);
 
 	return M0_RC(rc);
 }
