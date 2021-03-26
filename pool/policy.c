@@ -131,6 +131,31 @@ static int pver_first_available_get(struct m0_pools_common  *pc,
 	if (*pv == NULL)
 		rc = m0_pool_version_append(pc, pver, pv);
 
+	if (pver->pv_kind == M0_CONF_PVER_FORMULAIC) {
+		M0_LOG(M0_ALWAYS, "Allowance SRECD of FORMULAIC pver ="
+					"[%d, %d, %d, %d, %d]",
+				pver->pv_u.formulaic.pvf_allowance[0],
+				pver->pv_u.formulaic.pvf_allowance[1],
+				pver->pv_u.formulaic.pvf_allowance[2],
+				pver->pv_u.formulaic.pvf_allowance[3],
+				pver->pv_u.formulaic.pvf_allowance[4]);
+	} else if (pver->pv_kind == M0_CONF_PVER_ACTUAL) {
+		M0_LOG(M0_ALWAYS, "Tolerance of ACTUAL pver ="
+					"[%d, %d, %d, %d, %d]",
+				pver->pv_u.subtree.pvs_tolerance[0],
+				pver->pv_u.subtree.pvs_tolerance[1],
+				pver->pv_u.subtree.pvs_tolerance[2],
+				pver->pv_u.subtree.pvs_tolerance[3],
+				pver->pv_u.subtree.pvs_tolerance[4]);
+		M0_LOG(M0_ALWAYS, "SRECD of ACTUAL pver ="
+					"[%d, %d, %d, %d, %d]",
+				pver->pv_u.subtree.pvs_recd[0],
+				pver->pv_u.subtree.pvs_recd[1],
+				pver->pv_u.subtree.pvs_recd[2],
+				pver->pv_u.subtree.pvs_recd[3],
+				pver->pv_u.subtree.pvs_recd[4]);
+	}
+
 	M0_LOG(M0_ALWAYS, "New N=%d K=%d P=%d", (*pv)->pv_attr.pa_N,
 						(*pv)->pv_attr.pa_K,
 						(*pv)->pv_attr.pa_P);

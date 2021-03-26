@@ -111,6 +111,13 @@ static int conf_pver_base_recd_update(const struct m0_conf_pool *pool)
 			M0_SET_ARR0(pver->pv_u.subtree.pvs_recd);
 			rc = m0_conf_walk(conf_pver_recd_build, &pver->pv_obj,
 					  pver->pv_u.subtree.pvs_recd);
+		M0_LOG(M0_ALWAYS, "Updated SRECD of pver ="
+					"[%d, %d, %d, %d, %d]",
+				pver->pv_u.subtree.pvs_recd[0],
+				pver->pv_u.subtree.pvs_recd[1],
+				pver->pv_u.subtree.pvs_recd[2],
+				pver->pv_u.subtree.pvs_recd[3],
+				pver->pv_u.subtree.pvs_recd[4]);
 			break;
 		}
 	} m0_tl_endfor;
