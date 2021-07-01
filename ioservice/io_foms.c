@@ -2345,6 +2345,11 @@ static int m0_io_fom_cob_rw_tick(struct m0_fom *fom)
 		rwrep = io_rw_rep_get(fom->fo_rep_fop);
 		rwrep->rwr_rc    = m0_fom_rc(fom);
 		rwrep->rwr_count = fom_obj->fcrw_count << fom_obj->fcrw_bshift;
+		rwrep->rwr_ivec = rwfop->crw_ivec;
+	M0_LOG(M0_ALWAYS, "YJC_SRV: %p CKSUM: %.8s baddr: %p nob: %"PRIu64,
+	rw_reply, (char *)rw_reply->rwr_di_data_cksum.b_addr,
+	rw_reply->rwr_di_data_cksum.b_addr,
+	rw_reply->rwr_di_data_cksum.b_nob);
 		/* Information about the transaction for this update op. */
 		m0_fom_mod_rep_fill(&rwrep->rwr_mod_rep, fom);
 		return M0_RC(rc);

@@ -518,6 +518,7 @@ static void ioreq_iosm_handle_executed(struct m0_sm_group *grp,
 				rc = ioo->ioo_ops->iro_dgmode_recover(ioo);
 
 			/* Valid data are available now, copy to application */
+			m0_bufvec_print(&ioo->ioo_attr, "YJC_CKSUM_BUFVEC");
 			rc = ioo->ioo_ops->iro_application_data_copy(ioo,
 				CD_COPY_TO_APP, 0);
 			if (rc != 0) {
