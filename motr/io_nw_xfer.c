@@ -471,9 +471,9 @@ static void target_ioreq_seg_add(struct target_ioreq              *ti,
 {
 	uint32_t                   seg;
 	uint32_t                   tseg;
-	uint32_t                   coff;
-	m0_bindex_t                toff;
-	m0_bindex_t                goff;
+	uint32_t                   coff = 0;
+	m0_bindex_t                toff = 0;
+	m0_bindex_t                goff = 0;
 	m0_bindex_t                pgstart;
 	m0_bindex_t                pgend;
 	struct data_buf           *buf;
@@ -493,7 +493,7 @@ static void target_ioreq_seg_add(struct target_ioreq              *ti,
 	unsigned int               opcode;
 	m0_bcount_t                grp_size;
 	uint64_t                   page_size;
-	uint32_t                   ti_idx;
+	uint32_t                   ti_idx = 0;
 
 	M0_PRE(tgt != NULL);
 	frame = tgt->ta_frame;
@@ -520,10 +520,6 @@ static void target_ioreq_seg_add(struct target_ioreq              *ti,
 	toff    = target_offset(frame, play, gob_offset);
 	pgstart = toff;
 	goff    = unit_type == M0_PUT_DATA ? gob_offset : 0;
-	coff    = di_cksum_offset(play, gob_offset);
-	ti_idx  = toff / layout_unit_size(play);
-	M0_LOG(M0_DEBUG, "YJC: coff = %"PRIu32 " toff = %"PRIu64 " goff = %"PRIu64,
-		          coff, toff, goff);
 
 	M0_LOG(M0_DEBUG,
 	       "[gpos %"PRIu64", count %"PRIu64"] [%"PRIu64", %"PRIu64"]"
@@ -626,17 +622,28 @@ static void target_ioreq_seg_add(struct target_ioreq              *ti,
 				 INDEX(ivec, seg), COUNT(ivec, seg),
 				 FID_P(&ti->ti_fid), pattr[seg]);
 
+		if (unit_type == M0_PUT_DATA) {
+			coff    = di_cksum_offset(play, gob_offset);
+			ti_idx  = toff / layout_unit_size(play);
+			M0_LOG(M0_ALWAYS, "YJC: COFF = %"PRIu32 " TOFF = %"PRIu64 " GOFF = %"PRIu64,
+				          coff, toff, goff);
+		}
+
 		goff += COUNT(ivec, seg);
 		++ivec->iv_vec.v_nr;
 		pgstart = pgend;
 		if (attrbvec != NULL && unit_type == M0_PUT_DATA && opcode == M0_OC_WRITE) {
 			BUFVI(attrbvec, ti_idx) = BUFVI(&ioo->ioo_attr, coff);
 			BUFVC(attrbvec, ti_idx) = BUFVC(&ioo->ioo_attr, coff);
+			M0_LOG(M0_ALWAYS, "YJC: IOO_ATTR index:%.16s  count: %"PRIu64" TIOREQ[%p]", (char *)BUFVI(&ioo->ioo_attr, coff), BUFVC(&ioo->ioo_attr, coff), ti);
+			M0_LOG(M0_ALWAYS, "YJC: TI_ATTRBVEC index: %.16s count: %"PRIu64" ti_idx: %"PRIu32" TIOREQ[%p]", (char *)BUFVI(attrbvec, ti_idx), BUFVC(attrbvec, ti_idx), ti_idx, ti);
 		} else if (coff_ivec != NULL && unit_type == M0_PUT_DATA && opcode == M0_OC_READ) {
 			INDEX(coff_ivec, ti_idx) = coff;
 			COUNT(coff_ivec, ti_idx) = CKSUM_SIZE;
 			coff_ivec->iv_vec.v_nr++;
+			M0_LOG(M0_ALWAYS, "YJC: TI_COFF_IVEC index: %"PRIu64" count: %"PRIu64" ti_idx: %"PRIu32" TIOREQ[%p]", INDEX(coff_ivec, ti_idx), COUNT(coff_ivec, ti_idx), ti_idx, ti);
 		}
+//		M0_LOG(M0_ALWAYS, "YJC: Buf [%p] Count 1 %"PRIu64, attrbvec, m0_vec_count(&attrbvec->ov_vec));
 	}
 	M0_LEAVE();
 }
@@ -775,6 +782,7 @@ static int m0_buf_from_bufvec(struct m0_buf *dest,
 		return 0;
 
 	count = m0_vec_count(&src->ov_vec);
+//	M0_LOG(M0_ALWAYS, "YJC: Buf [%p] Count 2 %"PRIu64, src, m0_vec_count(&src->ov_vec));
 	//YJC_TODO : Need to free buffer
 	dest->b_addr = m0_alloc(count);
 	if (dest->b_addr == NULL)
@@ -807,6 +815,7 @@ static int target_ioreq_iofops_prepare(struct target_ioreq *ti,
 				       enum page_attr       filter)
 {
 	int                          rc = 0;
+	int                          i;
 	uint32_t                     seg = 0;
 	/* Number of segments in one m0_rpc_bulk_buf structure. */
 	uint32_t                     bbsegs;
@@ -988,6 +997,7 @@ static int target_ioreq_iofops_prepare(struct target_ioreq *ti,
 		rw_fop->crw_index = ti->ti_obj;
 		if (filter == PA_DATA) {
 			attrbvec = &ti->ti_attrbufvec;
+//	M0_LOG(M0_ALWAYS, "YJC: Buf [%p] Count 1.5 %"PRIu64, attrbvec, m0_vec_count(&attrbvec->ov_vec));
 			rc = m0_buf_from_bufvec(&rw_fop->crw_di_data_cksum,
 					        attrbvec);
 			M0_ASSERT(rc == 0);
@@ -1022,6 +1032,9 @@ static int target_ioreq_iofops_prepare(struct target_ioreq *ti,
 
 		m0_atomic64_inc(&ti->ti_nwxfer->nxr_iofop_nr);
 		iofops_tlist_add(&ti->ti_iofops, irfop);
+
+		for (i = 0; i <rw_fop->crw_ivec.ci_nr; i++)
+			M0_LOG(M0_ALWAYS, "YJC: REQ_FOP[%p] PREPARE WIRE_INDEXVEC[%d] INDEX: %"PRIu64" COUNT: %"PRIu64" TIOREQ[%p]", rw_fop, i, rw_fop->crw_ivec.ci_iosegs[i].ci_index, rw_fop->crw_ivec.ci_iosegs[i].ci_count, ti);
 
 		M0_LOG(M0_DEBUG,
 		       "fop=%p bulk=%p (%s) @"FID_F" io fops = %"PRIu64
@@ -1162,6 +1175,8 @@ static int target_ioreq_init(struct target_ioreq    *ti,
 	M0_ALLOC_ARR(ti->ti_attrbufvec.ov_buf, nr_attr);
 	if (ti->ti_attrbufvec.ov_buf == NULL)
 		goto fail;
+
+//	M0_LOG(M0_ALWAYS, "YJC: Buf: [%p] Count 0 %"PRIu64, &ti->ti_attrbufvec, m0_vec_count(&ti->ti_attrbufvec.ov_vec));
 
 	/*
 	 * For READOLD method, an extra bufvec is needed to remember
@@ -1318,6 +1333,7 @@ static int nw_xfer_io_distribute(struct nw_xfer_request *xfer)
 	struct pargrp_iomap        *iomap;
 	struct m0_client           *instance;
 	m0_bcount_t                 grp_size;
+	uint64_t                    seg_add_count = 0;
 
 	M0_ENTRY("nw_xfer_request %p", xfer);
 
@@ -1364,6 +1380,13 @@ static int nw_xfer_io_distribute(struct nw_xfer_request *xfer)
 				continue;
 			}
 
+                         M0_LOG(M0_ALWAYS, "YJC uext : %"PRIu64 "- %"PRIu64
+                                          " vext : %"PRIu64 "- %"PRIu64
+                                          " rext : %"PRIu64 "- %"PRIu64,
+                                          u_ext.e_start/4096, u_ext.e_end/4096,
+                                          v_ext.e_start/4096, v_ext.e_end/4096,
+                                          r_ext.e_start/4096, r_ext.e_end/4096);
+
 			count     = m0_ext_length(&r_ext);
 			unit_type = m0_pdclust_unit_classify(play, unit);
 			if (unit_type == M0_PUT_SPARE ||
@@ -1394,9 +1417,12 @@ static int nw_xfer_io_distribute(struct nw_xfer_request *xfer)
 			if (rc != 0)
 				goto err;
 
+			M0_LOG(M0_ALWAYS, "YJC: SEG_ADD COUNTER [DATA?]: %"PRIu64" GOB OFFSET: %"PRIu64, seg_add_count, r_ext.e_start);
+
 			ti->ti_ops->tio_seg_add(ti, &src, &tgt, r_ext.e_start,
 						m0_ext_length(&r_ext),
 						iomap);
+			seg_add_count++;
 		}
 
 		M0_ASSERT(ergo(M0_IN(op_code,
@@ -1443,9 +1469,11 @@ static int nw_xfer_io_distribute(struct nw_xfer_request *xfer)
 							      true);
 					}
 				}
+				M0_LOG(M0_ALWAYS, "YJC: SEG_ADD COUNTER [PARITY?]: %"PRIu64" GOB_OFFSET :%"PRIu64, seg_add_count, pgstart);
 				ti->ti_ops->tio_seg_add(ti, &src, &tgt, pgstart,
 							layout_unit_size(play),
 							iomap);
+				seg_add_count++;
 			}
 			/*
 			 * Since CROW is not enabled in non-oostore mode cobs

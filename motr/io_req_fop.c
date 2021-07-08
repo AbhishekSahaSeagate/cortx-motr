@@ -103,11 +103,14 @@ M0_INTERNAL struct m0_file *m0_client_fop_to_file(struct m0_fop *fop)
 
 static void buf_to_bufvec_copy(struct m0_buf *buf, struct m0_bufvec *bufvec,
 			       m0_bindex_t index, m0_bcount_t count,
-			       m0_bindex_t buf_offset)
+			       m0_bindex_t buf_offset, struct m0_fop_cob_rw_reply  *rw_reply)
 {
 	void *data;
 
 	data = buf->b_addr + (buf_offset * CKSUM_SIZE);
+
+	M0_LOG(M0_ALWAYS, "YJC: CLIENT BUFVEC POPULATE | [%p] DATA: %.16s INDEX: %"PRIu64" COUNT :%"PRIu64" OFFSET: %"PRIu64, rw_reply ,(char *)data, index, count, buf_offset);
+
 	memcpy(BUFVI(bufvec, index), data, count);
 	BUFVC(bufvec, index) = count;
 }
@@ -115,13 +118,15 @@ static void buf_to_bufvec_copy(struct m0_buf *buf, struct m0_bufvec *bufvec,
 static void application_attribute_copy(struct m0_indexvec *rep_ivec,
 				       struct target_ioreq *ti,
 				       struct m0_op_io *ioo,
-				       struct m0_buf *buf)
+				       struct m0_buf *buf,
+					struct m0_fop_cob_rw_reply  *rw_reply)
 {
 	uint32_t                unit_size;
 	uint32_t                ti_seg;
 	uint32_t                rep_seg = 0;
 	m0_bindex_t             rep_index;
 	m0_bindex_t             ti_index;
+	m0_bindex_t             cur_count = 0;
 	struct m0_ivec_cursor   cursor;
 	struct m0_indexvec     *ti_ivec = &ti->ti_ivec;
 	struct m0_indexvec     *coff_ivec = &ti->ti_coff_ivec;
@@ -129,16 +134,22 @@ static void application_attribute_copy(struct m0_indexvec *rep_ivec,
 	unit_size = m0_obj_layout_id_to_unit_size(m0__obj_lid(ioo->ioo_obj));
 	m0_ivec_cursor_init(&cursor, rep_ivec);
 
-	while (!m0_ivec_cursor_move(&cursor, unit_size)) {
+	M0_LOG(M0_ALWAYS, "YJC: [%p] INITIAL_INDEX: %"PRIu64, rw_reply, m0_ivec_cursor_index(&cursor));
+
+	while (!m0_ivec_cursor_move(&cursor, cur_count)) {
 		rep_index = m0_ivec_cursor_index(&cursor);
+		cur_count = unit_size;
 		ti_seg = 0;
+		M0_LOG(M0_ALWAYS, "YJC: [%p] REP_INDEX: %"PRIu64" REP_SEG: %"PRIu32, rw_reply, rep_index, rep_seg);
 		M0_ASSERT((rep_seg * CKSUM_SIZE) < buf->b_nob);
 		while (ti_seg < SEG_NR(ti_ivec)) {
 			ti_index = INDEX(ti_ivec, ti_seg);
+		M0_LOG(M0_ALWAYS, "YJC: [%p] TI_INDEX: %"PRIu64" TI_SEG: %"PRIu32, rw_reply, ti_index, ti_seg);
 			if (rep_index == ti_index) {
+		M0_LOG(M0_ALWAYS, "YJC: [%p] COFF_INDEX: %"PRIu64, rw_reply, INDEX(coff_ivec, ti_seg));
 				buf_to_bufvec_copy(buf, &ioo->ioo_attr,
-						INDEX(coff_ivec, ti_seg),
-						CKSUM_SIZE, rep_seg);
+						INDEX(coff_ivec, (ti_index / unit_size)),
+						CKSUM_SIZE, rep_seg, rw_reply);
 		                break;
 		        }
 		        ti_seg++;
@@ -174,6 +185,7 @@ static void io_bottom_half(struct m0_sm_group *grp, struct m0_sm_ast *ast)
 	struct m0_indexvec           rep_attr_ivec;
 	struct m0_fop_generic_reply *gen_rep;
 	struct m0_fop_cob_rw        *rwfop;
+	int                          i;
 
 	M0_ENTRY("sm_group %p sm_ast %p", grp, ast);
 
@@ -221,8 +233,12 @@ static void io_bottom_half(struct m0_sm_group *grp, struct m0_sm_ast *ast)
 					rwfop->crw_ivec.ci_nr, 0,
 					&rep_attr_ivec);
 
+		M0_LOG(M0_ALWAYS, "YJC: REP_CKSUM_BUF: %s TIOREQ: %p RW_REP: %p", (char *)rw_reply->rwr_di_data_cksum.b_addr, tioreq, rw_reply);
+		for (i = 0; i <rwfop->crw_ivec.ci_nr; i++)
+			M0_LOG(M0_ALWAYS, "YJC: REP_FOP[%p] | REQ_FOP[%p] WIRE_INDEXVEC[%d] INDEX: %"PRIu64" COUNT: %"PRIu64, rw_reply, rwfop, i, rwfop->crw_ivec.ci_iosegs[i].ci_index, rwfop->crw_ivec.ci_iosegs[i].ci_count);
+
 		application_attribute_copy(&rep_attr_ivec, tioreq, ioo,
-					   &rw_reply->rwr_di_data_cksum);
+					   &rw_reply->rwr_di_data_cksum, rw_reply);
 
 		m0_indexvec_free(&rep_attr_ivec);
 	}

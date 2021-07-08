@@ -77,7 +77,7 @@ test_with_N_K()
 	object_id3=0x7300000000000001:0x34
 	object_id4=1048577
 	block_size=4096
-	block_count=10
+	block_count=6
 	obj_count=5
 	trunc_len=2560
 	trunc_count=17
@@ -149,15 +149,16 @@ test_with_N_K()
 #	}
 #	echo "m0touch and m0unlink successful"
 
+	echo "***********************STARTING WRITE!!******************************"
 	$motr_st_util_dir/m0cp $MOTR_PARAMS_V -o $object_id1 $src_file \
-                                 -s $block_size -c $block_count -L 9 \
+                                 -s $block_size -c $block_count -L 1 \
                                  -b $blks_per_io || {
 		error_handling $? "Failed to copy object"
 	}
 	echo "***********************STARTING READ!!******************************"
 
 	$motr_st_util_dir/m0cat $MOTR_PARAMS_V -o $object_id1 \
-				  -s $block_size -c $block_count -L 9 -b $blks_per_io \
+				  -s $block_size -c $block_count -L 1 -b $blks_per_io \
 				  $dest_file || {
 		error_handling $? "Failed to read object"
 	}

@@ -223,7 +223,7 @@ do { \
 			memcpy(str, (buf)->ov_buf[i], CKSUM_SIZE); \
 		} \
 	} \
-	M0_LOG(M0_DEBUG, "YJC_DBUG: cksum = %s", (char *)str); \
+	M0_LOG(M0_ALWAYS, "YJC_DBUG: cksum = %s", (char *)str); \
 }while(0)
 
 /**

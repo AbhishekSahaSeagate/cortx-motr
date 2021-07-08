@@ -610,7 +610,7 @@ enum {
 do { \
 	struct m0_vec *vec = &(buf)->ov_vec; \
 	char *dst = (char *)(buf)->ov_buf[seg]; \
-	M0_LOG(M0_DEBUG, msg " count[%d] = %"PRIu64 \
+	M0_LOG(M0_ALWAYS, msg " count[%d] = %"PRIu64 \
 			"ov buf = %c%c", \
 			seg, vec->v_count[seg], dst[0], dst[1]); \
 }while(0)
@@ -620,7 +620,7 @@ do { \
 	struct m0_vec *vec = &(buf)->ov_vec; \
 	char *dst = (char *)(buf)->ov_buf[seg]; \
 	char *data = (char *)(dbuf)->ov_buf[seg]; \
-	M0_LOG(M0_DEBUG, msg " count[%d] = %"PRIu64 \
+	M0_LOG(M0_ALWAYS, msg " count[%d] = %"PRIu64 \
 			" cksum = %c%c data = %c%c", \
 			seg, vec->v_count[seg], dst[0], dst[1], data[0],data[1]); \
 }while(0)
